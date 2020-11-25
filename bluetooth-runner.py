@@ -6,8 +6,7 @@ import logging
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import gobject
-import subprocess
+import gi.repository.GLib
 import time
 
 LOG_LEVEL = logging.INFO
@@ -62,7 +61,7 @@ if __name__ == "__main__":
                             dbus_interface="org.bluez.Device",
                             path_keyword="path", interface_keyword="interface")
     try:
-        mainloop = gobject.MainLoop()
+        mainloop = gi.repository.GLib.MainLoop()
         mainloop.run()
     except KeyboardInterrupt:
         pass
