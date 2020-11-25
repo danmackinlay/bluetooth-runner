@@ -21,24 +21,30 @@ def properties_changed(
         invalidated,
         path,
         *args, **kwargs):
-    device = dbus.Interface(bus.get_object("org.bluez", path), "org.bluez.Device")
-    properties = device.GetProperties()
-
-    if (property_name == "Connected"):
-        action = "connected" if value else "disconnected"
-        print("The device %s [%s] is %s " % (properties["Alias"],
-              properties["Address"], action))
-        if action == "connected":
-            print("sleeping")
-            time.sleep(3)
-            subprocess.call(['xinput', 'set-prop',
-                             'ThinkPad Compact Bluetooth Keyboard with TrackPoint',
-                             'Device Accel Constant Deceleration', '0.5'])
-            subprocess.call(['xinput', 'set-button-map',
-                             'ThinkPad Compact Bluetooth Keyboard with TrackPoint',
-                             '1 18 3 4 5 6 7'])
-            print("command executed")
-
+    # It would be nice if I knew enough dbus to run this only on
+    # appropriate dbus events for appropriate dbus devices
+    # but I don't.
+    time.sleep(3)
+    try:
+        devcode = subprocess.check_output([
+            'xinput', 'list', '--id-only',
+            "Bluetooth Mouse M336/M337/M535 Mouse"
+        ]).decode('ascii').strip()
+        propstring = subprocess.check_output([
+            'xinput', 'list-props',
+            devcode ]).decode('ascii')
+        match = re.search(
+            r'Natural Scrolling Enabled \(([\d]*)\)', propstring)
+        if match:
+            propcode = match.group(1)
+            subprocess.call([
+                'xinput', 'set-prop', devcode, propcode, '1'])
+        else:
+            logging.error(
+              "Unable to find the right prop code in '{0}'.".format(
+                propstring))
+    except subprocess.CalledProcessError as ex:
+        logging.error("xinput error '{0}'.".format(ex))
 
 def shutdown(signum, frame):
     mainloop.quit()
