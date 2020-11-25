@@ -15,7 +15,12 @@ LOG_FILE = "/dev/stdout"
 #LOG_FILE = "/var/log/syslog"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
-def device_property_changed_cb(property_name, value, path, interface):
+def properties_changed(
+        interface,
+        changed,
+        invalidated,
+        path,
+        *args, **kwargs):
     device = dbus.Interface(bus.get_object("org.bluez", path), "org.bluez.Device")
     properties = device.GetProperties()
 
@@ -56,10 +61,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # listen for signals on the Bluez bus
-    bus.add_signal_receiver(device_property_changed_cb, bus_name="org.bluez",
-                            signal_name="PropertyChanged",
-                            dbus_interface="org.bluez.Device",
-                            path_keyword="path", interface_keyword="interface")
+    bus.add_signal_receiver(
+        properties_changed,
+        dbus_interface = "org.freedesktop.DBus.Properties",
+        signal_name = "PropertiesChanged",
+        arg0 = "org.bluez.Device1",
+        path_keyword = "path")
     try:
         mainloop = gi.repository.GLib.MainLoop()
         mainloop.run()
