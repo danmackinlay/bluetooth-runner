@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+
+import sys
+import subprocess
+import re
+
+
+def main(*args, **kwargs):
+    try:
+        devcode = subprocess.check_output([
+            'xinput', 'list', '--id-only',
+            "Bluetooth Mouse M336/M337/M535 Mouse"
+        ]).decode('ascii').strip()
+        propstring = subprocess.check_output([
+            'xinput', 'list-props',
+            devcode ]).decode('ascii')
+
+    except subprocess.CalledProcessError as ex:
+        sys.stderr.write("xinput list error '{0}'.".format(ex))
+        return
+
+    match = re.search(
+        r'Natural Scrolling Enabled \(([\d]*)\)', propstring)
+    if not match:
+        sys.stderr.write(
+            "Unable to find the right prop code in '{0}'.".format(
+                propstring))
+        return
+    propcode = match.group(1)
+    try:
+        restring = subprocess.check_output([
+            'xinput', 'set-prop', devcode, propcode, '1']).decode('ascii')
+        sys.stdout.write(restring)
+    except subprocess.CalledProcessError as ex:
+        sys.stderr.write("xinput set-prop error '{0}'.".format(ex))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
