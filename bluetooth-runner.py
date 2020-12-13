@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import sys
 import signal
@@ -8,6 +8,8 @@ import dbus.service
 import dbus.mainloop.glib
 import gi.repository.GLib
 import time
+import subprocess
+import re
 
 LOG_LEVEL = logging.INFO
 #LOG_LEVEL = logging.DEBUG
@@ -21,30 +23,13 @@ def properties_changed(
         invalidated,
         path,
         *args, **kwargs):
-    # It would be nice if I knew enough dbus to run this only on
-    # appropriate dbus events for appropriate dbus devices
-    # but I don't.
     time.sleep(3)
     try:
-        devcode = subprocess.check_output([
-            'xinput', 'list', '--id-only',
-            "Bluetooth Mouse M336/M337/M535 Mouse"
-        ]).decode('ascii').strip()
-        propstring = subprocess.check_output([
-            'xinput', 'list-props',
-            devcode ]).decode('ascii')
-        match = re.search(
-            r'Natural Scrolling Enabled \(([\d]*)\)', propstring)
-        if match:
-            propcode = match.group(1)
-            subprocess.call([
-                'xinput', 'set-prop', devcode, propcode, '1'])
-        else:
-            logging.error(
-              "Unable to find the right prop code in '{0}'.".format(
-                propstring))
+        resstring = subprocess.check_output([
+            'restore_logitech_scroll'
+        ]).decode('ascii')
     except subprocess.CalledProcessError as ex:
-        logging.error("xinput error '{0}'.".format(ex))
+        logging.error("subproc error '{0}'.".format(ex))
 
 def shutdown(signum, frame):
     mainloop.quit()
